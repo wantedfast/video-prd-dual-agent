@@ -1,4 +1,4 @@
 interface:
   display_name: "Video PRD Dual Agent"
-  short_description: "逐轮确认视频生成需求并输出完整 AI 视频 PRD。"
-  default_prompt: "Use $video-prd-dual-agent to confirm video generation requirements step by step and produce an AI video PRD."
+  short_description: "Mandatory real multi-agent controller for HyperFrame / HyperFrames video PRDs."
+  default_prompt: "Use $video-prd-dual-agent to dispatch real role-bounded agents, collect their artifacts, and produce an evidence-backed HyperFrame / HyperFrames video PRD."

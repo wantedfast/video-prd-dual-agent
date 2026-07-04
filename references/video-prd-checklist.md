@@ -1,71 +1,123 @@
-# Video PRD Checklist
+# Video PRD Multi-Agent Checklist
 
-Use this reference to guide question selection, risk checks, and final PRD completeness.
+Use this reference as a quality checklist for `video-prd-dual-agent`. It supports the controller workflow in `SKILL.md`; it must not reintroduce step-by-step user questioning, Agent C, virtual role simulation, or single-agent fallback.
 
-## Material Analysis
+## Material Intake Checks
 
-For reference images or screenshots, extract visual language without copying the exact content:
+For SRT, narration, subtitles, or copy:
 
-- Main palette.
-- Lighting.
-- Background style.
-- Material and texture.
-- Typography feel.
-- Composition.
-- UI or graphic element style.
-- Camera atmosphere.
-- Elements suitable for migration into video.
-- Elements unsuitable for migration.
+- Read the actual text, not only timestamps.
+- Preserve the SRT timing baseline.
+- Extract topic, viewpoint, chapter structure, emotional arc, key claims, data claims, and risk-sensitive phrases.
+- Identify phrases suitable for large on-screen text.
+- Identify phrases that should remain in subtitles but should not be enlarged as screen titles.
 
-For script, subtitles, SRT, or copy, extract:
+For charts, screenshots, and reference images:
 
-- Topic.
-- Content category.
-- Core viewpoint.
-- Chapter structure.
-- Emotional change.
-- Sentences suitable for large text emphasis.
-- Concepts suitable for animation explanation.
-- Positions suitable for case demonstration.
-- Places that can be optimized without changing meaning.
-- Risk-sensitive statements.
+- Inspect the actual image.
+- Extract palette, typography, layout, chart type, important numbers, labels, and visual hierarchy.
+- Record exact data values that must not be changed.
+- Record which regions should be highlighted, zoomed, masked, or avoided.
+- Record any privacy, copyright, stock-code, account, or brand-logo risks.
 
-## Common Video Categories
+For product or brand materials:
 
-Infer the category from materials before making recommendations:
+- Extract product category, target user, product promise, UI affordances, brand tone, and visual constraints.
+- Do not invent features absent from the material.
 
-- Finance / investment / business.
-- Medical / health / pharmaceutical.
-- Education / knowledge course.
-- Technology / AI / software product.
-- Brand promotion / advertising.
-- Emotion / psychology / personal growth.
-- Plot / narrative short film.
-- Travel / city / lifestyle.
-- Game / animation / entertainment.
-- Corporate report / roadshow / investment pitch.
-- News / commentary / opinion.
-- Other.
+## Required Sub-Agent Artifacts
+
+The Controller / Integrator must collect these artifacts before writing PRD v1.
+
+| Role | Required artifact | Must include |
+| --- | --- | --- |
+| Agent A | Decision memo | objective, audience, platform, ratio, duration, style, opening hook, narrative structure, risk boundary |
+| Agent B | Co-design review memo | agreed / modified / disagreed decisions, executable alternatives, final decisions to reflect |
+| Scene Planner | Scene overview | time ranges, narration mapping, narrative function, core message, recommended visuals, source material |
+| Scene Director | Shot storyboard | per-Shot visuals, assets, camera movement, transition, HyperFrame prompt, notes |
+| Motion Agent | Motion timeline | per-Shot timing, object, action, animation style, duration, intensity, purpose |
+| Text Agent | Subtitle and keyword plan | subtitle rules, screen text, keyword highlights, banned words, risk wording |
+| PRD Reviewer | Review verdict | `OK` or `NOT OK`; if `NOT OK`, mandatory fixes with section references |
+
+If any artifact is missing, the Controller must stop with the mandatory-role blocked message from `SKILL.md`.
+
+## Decision Coverage Checklist
+
+The A/B decision loop must settle:
+
+- video objective and content type
+- target audience
+- platform, aspect ratio, resolution, and duration
+- source-material priority when materials conflict
+- opening hook
+- scene structure and pacing
+- chart / screenshot / product material display strategy
+- animation intensity
+- subtitle density and keyword highlight rules
+- ending and risk reminder
+- domain risk boundary
+- final AI video tool output format, defaulting to HyperFrame / HyperFrames
+
+## Scene Checklist
+
+- Opening hook is its own Scene.
+- Each Scene has one narrative purpose.
+- Scene timing follows SRT when SRT exists.
+- Each Scene maps to source material or a generated visual strategy.
+- Data explanation, chart display, product demonstration, conclusion, and risk warning are separated when useful.
+- No Scene depends on fabricated facts.
+
+## Shot Checklist
+
+- Every Scene has at least one Shot.
+- Complex Scenes are split into multiple Shots.
+- Each Shot includes narration, visual content, main elements, background elements, camera movement, transition, required assets, and a HyperFrame-oriented prompt.
+- Chart Shots say exactly what region is highlighted and how the viewer should read it.
+- Screenshot/UI Shots say what is visible, what is masked, and what interaction or camera movement happens.
+- Finance-related Shots do not show unmasked stock codes, account details, buy/sell markers, or actionable trading instructions unless the user explicitly provided a compliant non-investment context.
+
+## Motion Checklist
+
+- Motion timeline links every row to a Scene and Shot.
+- The first 3 seconds have deliberate rhythm.
+- Important numbers have controlled emphasis.
+- Charts reveal progressively or receive focused highlights.
+- Transitions are specified with timing and style.
+- Motion serves comprehension, not empty spectacle.
+- Repeated animation patterns are avoided unless consistency is intentional.
+
+## Text And Subtitle Checklist
+
+- Subtitles match the SRT/narration meaning.
+- No more than two subtitle lines per screen unless the target format explicitly supports more.
+- Screen titles compress but do not distort meaning.
+- Important numbers, keywords, product names, and concepts are highlighted.
+- Risk-sensitive phrases are softened in large screen text.
+- Banned or high-risk words are listed when relevant.
+- Final risk reminder wording is explicit when domain risk exists.
 
 ## Risk Boundaries
 
 ### Finance / Investment / Business
 
-Avoid income promises, stock recommendations, explicit buy/sell instructions, target price promises, and phrases like "稳赚", "必涨", or "无脑买".
+Avoid income promises, stock recommendations, explicit buy/sell instructions, target price promises, position sizing, leverage, follow-trade language, and future-return implications.
 
 Allow methodology, historical cases, risk reminders, abstract data display, and market logic explanation.
 
+Required framing for finance content:
+
+- historical review
+- method demonstration
+- data observation
+- learning exchange
+- not investment advice
+- history does not represent the future
+
 ### Medical / Health / Pharmaceutical
 
-Avoid diagnosis conclusions, treatment promises, replacing doctor advice, exaggerated drug efficacy, and fear-based claims.
+Avoid diagnosis conclusions, treatment promises, replacing doctor advice, exaggerated efficacy, and fear-based claims.
 
 Allow science education, medical consultation reminders, lifestyle suggestions, and risk identification.
-
-### Education / Knowledge Course
-
-Avoid information overload, too much text on one screen, skipped concepts, and animation that distracts from teaching.
-
-Allow step-by-step explanation, diagrams, examples, and summary cards.
 
 ### Technology / AI / Software Product
 
@@ -79,84 +131,30 @@ Avoid value-proposition pileups, empty slogans, visual-brand mismatch, and exagg
 
 Allow brand story, user pain points, product value, and emotionalized visual angle.
 
-### Emotion / Psychology / Growth
+## Final PRD Completeness Checklist
 
-Avoid absolute advice, excessive sensationalism, harmful labeling, and pseudo-diagnosis.
+The final PRD must include:
 
-Allow emotional resonance, scene-based expression, gentle suggestions, and personal-growth framing.
+- `0. 多 Agent 执行摘要`
+- `1. 项目目标`
+- `2. 输入素材分析`
+- `3. 需求决策总表`
+- `4. 视频定位`
+- `5. Scene 总览`
+- `6. Scene-by-Scene 结构`
+- `7. Shot-by-Shot 分镜 PRD`
+- `8. Motion 动画时间轴`
+- `9. 字幕与关键词高亮规则`
+- `10. 视觉语言`
+- `11. 统一视觉规范`
+- `12. AI 视频生成总提示词`
+- `13. Negative Prompt / 禁止事项`
+- `14. 风险与合规检查`
+- `15. 生成后检查清单`
 
-### Plot / Narrative Short Film
+The final response must include execution evidence:
 
-Avoid unclear motivation, scene jumps, missing shot continuity, and endings without payoff.
-
-Allow character arcs, emotional turns, scene progression, and visual foreshadowing.
-
-## Question Bank
-
-Choose the next question based on confirmed decisions and missing information. Ask one question per round.
-
-1. Video type positioning: course, ad, plot, product demo, brand film, science explanation, or other.
-2. Target platform and ratio: Douyin/TikTok, Video Account, Xiaohongshu, Bilibili, YouTube, website hero, roadshow screen; 9:16, 16:9, or 1:1.
-3. Target audience: beginner, professional user, prospect, investor, student, fan, etc.
-4. Overall style: premium restrained, tech-forward, high-impact, warm healing, cinematic, minimalist cards, etc.
-5. Reference image landing: what to keep and what to avoid.
-6. Opening hook: keep the original opening or rewrite for stronger retention.
-7. First sentence style: pain-point, cognitive conflict, story, question, suspense, result-first.
-8. Scene splitting density: by time, viewpoint, emotional turn, feature module, plot beat.
-9. Animation intensity: light, medium, key-moment strong animation, or full strong motion.
-10. Visual elements: icons, UI panels, characters, scenes, charts, maps, product interfaces, abstract symbols.
-11. Key concept visualization: formula, process, comparison, timeline, causal chain, map, relationship graph, product path.
-12. Subtitle and screen text: full captions, keyword captions, golden sentence captions, no captions, narration-synced captions.
-13. Transitions: fade, push/pull, glass dissolve, flash, camera push, light streak, chapter card.
-14. Ending: summary, golden sentence, CTA, next episode preview, brand exposure, emotional landing.
-15. Risk boundary: forbidden terms and softened expressions.
-16. AI video tool output format: detailed PRD, scene prompts, master prompt, negative prompt, checklist.
-
-## Final PRD Structure
-
-Use this structure when Agent C appears:
-
-```markdown
-# AI 视频生成 PRD
-
-## 1. 项目目标
-
-## 2. 输入素材
-* 参考素材：
-* 文案 / 字幕 / 脚本：
-
-## 3. 已确认需求总表
-
-## 4. 视频类型与目标用户
-
-## 5. 视频整体定位
-
-## 6. 参考素材视觉语言总结
-
-## 7. 内容结构总结
-
-## 8. Scene-by-scene 分镜需求
-
-### Scene X：标题
-* 时间段：
-* 内容目的：
-* 原文案 / 字幕摘要：
-* 画面描述：
-* 动画设计：
-* 镜头运动：
-* 屏幕文字：
-* 转场方式：
-* 注意事项：
-
-## 9. 关键动画节点
-
-## 10. 字幕与屏幕文字规范
-
-## 11. 全片统一视觉规范
-
-## 12. AI 视频工具可执行总提示词
-
-## 13. Negative Prompt / 禁止事项
-
-## 14. 生成后检查清单
-```
+- Selected agents
+- One-line artifact returned by each agent
+- PRD Reviewer verdict
+- Final PRD file path when created
