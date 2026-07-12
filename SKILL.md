@@ -1,6 +1,6 @@
 ---
 name: video-prd-dual-agent
-description: Controller skill for mandatory real multi-agent Chinese video PRD production for HyperFrame / HyperFrames. Use when the user invokes video-prd-dual-agent or provides SRT, narration, screenshots, charts, product notes, statistics, or visual assets and asks for a video PRD, video generation PRD, storyboard, shot plan, animation plan, or HyperFrame-ready production brief. This skill requires visible role-bounded sub-agent dispatch for Agent A, Agent B, Scene Planner, Scene Director, Motion Agent, Text Agent, and PRD Reviewer; it must not silently simulate those roles inside one agent.
+description: Controller skill for mandatory real multi-agent Chinese video PRD production for HyperFrame / HyperFrames. Use when the user invokes video-prd-dual-agent or provides SRT, narration, screenshots, charts, product notes, statistics, or visual assets and asks for a video PRD, video generation PRD, storyboard, shot plan, animation plan, or HyperFrame-ready production brief. This skill requires visible role-bounded sub-agent dispatch for Agent A, Agent B, Scene Planner, Scene Director, Visual Asset Agent, Motion Agent, Text Agent, and PRD Reviewer; it must not silently simulate those roles inside one agent.
 ---
 
 # Video PRD Dual Agent
@@ -13,10 +13,10 @@ It does **not** simulate an internal team. The main agent is the Controller / In
 
 Forbidden:
 
-- silently simulating Agent A / Agent B / Scene Planner / Scene Director / Motion Agent / Text Agent / PRD Reviewer inside one hidden draft
+- silently simulating Agent A / Agent B / Scene Planner / Scene Director / Visual Asset Agent / Motion Agent / Text Agent / PRD Reviewer inside one hidden draft
 - claiming multi-agent execution without listing dispatched agents and returned artifacts
 - asking the user for step-by-step decisions when the provided materials and defaults are enough
-- producing a PRD that lacks Scene, Shot, Motion, subtitle, prompt, or risk-review sections
+- producing a PRD that lacks Scene, Shot, visual asset plan, Motion, subtitle, prompt, or risk-review sections
 
 Invoking this skill counts as an explicit user request for role-bounded sub-agent work.
 
@@ -32,13 +32,15 @@ Before generating any PRD content, the main agent must:
    - Agent B
    - Scene Planner
    - Scene Director
+   - Visual Asset Agent
    - Motion Agent
    - Text Agent
    - PRD Reviewer
-5. Collect one concrete artifact from each role.
-6. Assemble PRD v1 only after role artifacts are returned.
-7. Send PRD v1 to PRD Reviewer.
-8. If PRD Reviewer returns `NOT OK`, route mandatory fixes back to the owning role or fix them locally when the ownership is purely integrative, then repeat reviewer validation until `OK` or until the blocker is explicit.
+5. Run Agent A and Agent B as an explicit proposal-review-reconciliation loop before downstream planning.
+6. Collect one concrete artifact from each role.
+7. Assemble PRD v1 only after role artifacts are returned.
+8. Send PRD v1 to PRD Reviewer.
+9. If PRD Reviewer returns `NOT OK`, route mandatory fixes back to the owning role or fix them locally when the ownership is purely integrative, then repeat reviewer validation until `OK` or until the blocker is explicit.
 
 If visible sub-agent capability is unavailable, do not silently degrade into single-agent simulation. Return exactly:
 
@@ -162,12 +164,39 @@ Shot rules:
 - Complex Scenes should be split into multiple Shots.
 - Do not write only "show chart" or "show image"; describe entry motion, highlighted region, viewer focus, and transition.
 
+### Visual Asset Agent
+
+Input:
+
+- reconciled Agent A/B decision memo
+- Scene Planner artifact
+- Scene Director storyboard
+- source material map
+- user-provided visual references and risk constraints
+
+Output artifact:
+
+- visual asset boundary: what can be generated as packaging, what must come from source footage, and what is forbidden
+- asset list: per-asset id, type, source type, purpose, suggested filename, and approved-for-generation flag
+- usage map: per-asset Scene/Shot placement, trigger moment, duration, layer position, and narrative purpose
+- prompt set: image-generation or design prompts plus negative prompts
+- motion/risk notes: how Motion Agent should animate each asset and what factual risks to avoid
+- generation mode: `planned_only` by default; use `generate_assets` only when the user explicitly requests actual image files
+
+Visual asset rules:
+
+- This role is a PRD planning role; it must not generate images or claim generated file paths.
+- Packaging assets may include title cards, labels, stickers, symbolic scene illustrations, texture transitions, info cards, and teaser cards.
+- Generated/planned assets must enhance the packaging layer only. They must not fake dishes, shop exteriors/interiors, people, maps, streets, landmarks, receipts, menus, ratings, or any other factual footage.
+- If actual image generation is requested, route approved assets to a separate Asset Generation Agent outside PRD planning; video rendering remains outside this skill.
+
 ### Motion Agent
 
 Input:
 
 - Scene Planner artifact
 - Scene Director storyboard
+- Visual Asset Agent usage map, when packaging assets are planned
 
 Output artifact:
 
@@ -322,6 +351,8 @@ Use Chinese. Prefer concise but complete Markdown.
 
 ## 7. Shot-by-Shot 分镜 PRD
 
+## 7A. 视觉包装素材 PRD
+
 ## 8. Motion 动画时间轴
 
 ## 9. 字幕与关键词高亮规则
@@ -402,6 +433,20 @@ Use:
 
 Each Shot must include a HyperFrame-oriented prompt.
 
+### 7A. 视觉包装素材 PRD
+
+Use:
+
+| Asset ID | 素材类型 | 来源类型 | 叙事目的 | 使用 Scene/Shot | Usage Map | Prompt | Negative Prompt | approved_for_generation | 风险备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+Rules:
+
+- This section is mandatory when the video is a restaurant, food, place, travel, or visit VLOG, or when the user asks for packaging assets.
+- `approved_for_generation` means the asset is safe to generate if the user later requests `generation_mode=generate_assets`; it does not trigger image generation by itself.
+- Use `planned_only` as the default generation mode.
+- Include nonfactual symbolic packaging when useful, but do not create assets that look like factual footage.
+
 ### 8. Motion 动画时间轴
 
 Use:
@@ -470,7 +515,8 @@ When editing this skill, verify:
 4. Every mandatory role has an output artifact contract.
 5. PRD Reviewer has an `OK` / `NOT OK` gate.
 6. Final output requires execution evidence.
-7. HyperFrame / HyperFrames remains the primary output target.
-8. Finance risk-control rules are included.
-9. SRT handling requires reading actual text, not only timestamps.
-10. PRD includes executable Scene, Shot, Motion, subtitle, prompt, and risk sections.
+7. Visual Asset Agent is represented when packaging assets are relevant.
+8. HyperFrame / HyperFrames remains the primary output target.
+9. Finance risk-control rules are included.
+10. SRT handling requires reading actual text, not only timestamps.
+11. PRD includes executable Scene, Shot, visual asset, Motion, subtitle, prompt, and risk sections.
