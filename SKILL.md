@@ -25,9 +25,10 @@ Invoking this skill counts as an explicit user request for role-bounded sub-agen
 Before generating any PRD content, the main agent must:
 
 1. Load this `SKILL.md` and the required reference checklist.
-2. Read all user-provided text materials completely, including SRT files.
-3. Inspect all user-provided local images, screenshots, charts, and media that are relevant to the PRD.
-4. Dispatch visible sub-agents for all mandatory roles:
+2. Read `references/video-prd-checklist.md` and `references/video-visual-constraints.md`.
+3. Read all user-provided text materials completely, including SRT files.
+4. Inspect all user-provided local images, screenshots, charts, and media that are relevant to the PRD.
+5. Dispatch visible sub-agents for all mandatory roles:
    - Agent A
    - Agent B
    - Scene Planner
@@ -36,11 +37,11 @@ Before generating any PRD content, the main agent must:
    - Motion Agent
    - Text Agent
    - PRD Reviewer
-5. Run Agent A and Agent B as an explicit proposal-review-reconciliation loop before downstream planning.
-6. Collect one concrete artifact from each role.
-7. Assemble PRD v1 only after role artifacts are returned.
-8. Send PRD v1 to PRD Reviewer.
-9. If PRD Reviewer returns `NOT OK`, route mandatory fixes back to the owning role or fix them locally when the ownership is purely integrative, then repeat reviewer validation until `OK` or until the blocker is explicit.
+6. Run Agent A and Agent B as an explicit proposal-review-reconciliation loop before downstream planning.
+7. Collect one concrete artifact from each role.
+8. Assemble PRD v1 only after role artifacts are returned.
+9. Send PRD v1 to PRD Reviewer.
+10. If PRD Reviewer returns `NOT OK`, route mandatory fixes back to the owning role or fix them locally when the ownership is purely integrative, then repeat reviewer validation until `OK` or until the blocker is explicit.
 
 If visible sub-agent capability is unavailable, do not silently degrade into single-agent simulation. Return exactly:
 
@@ -73,6 +74,8 @@ First identify and analyze everything the user provided:
 If there are images or local media, inspect them before writing the PRD. If there is text, read it completely before extracting the topic, structure, emotional arc, key claims, risk-sensitive statements, and phrases suitable for on-screen emphasis.
 
 For detailed checkpoints, read `references/video-prd-checklist.md` before dispatching PRD roles.
+
+For the default visual packaging system, read `references/video-visual-constraints.md` before dispatching PRD roles. Treat it as the global visual baseline for subtitle, packaging, HUD, animation, safe-zone, and HyperFrames implementation constraints unless the user provides a higher-priority brand guide, visual reference, or explicit alternate style.
 
 ## Default Assumptions
 
@@ -173,6 +176,7 @@ Input:
 - Scene Director storyboard
 - source material map
 - user-provided visual references and risk constraints
+- global visual constraints from `references/video-visual-constraints.md`
 
 Output artifact:
 
@@ -197,6 +201,7 @@ Input:
 - Scene Planner artifact
 - Scene Director storyboard
 - Visual Asset Agent usage map, when packaging assets are planned
+- global visual constraints from `references/video-visual-constraints.md`
 
 Output artifact:
 
@@ -481,6 +486,7 @@ Output one global HyperFrame prompt that can be directly used by the HyperFrame 
 Must include:
 
 - video style
+- global visual constraints from `references/video-visual-constraints.md`, unless overridden by user-provided brand or reference visuals
 - aspect ratio
 - camera language
 - motion style
@@ -516,7 +522,8 @@ When editing this skill, verify:
 5. PRD Reviewer has an `OK` / `NOT OK` gate.
 6. Final output requires execution evidence.
 7. Visual Asset Agent is represented when packaging assets are relevant.
-8. HyperFrame / HyperFrames remains the primary output target.
-9. Finance risk-control rules are included.
-10. SRT handling requires reading actual text, not only timestamps.
-11. PRD includes executable Scene, Shot, visual asset, Motion, subtitle, prompt, and risk sections.
+8. `references/video-visual-constraints.md` is read and applied as the default visual baseline.
+9. HyperFrame / HyperFrames remains the primary output target.
+10. Finance risk-control rules are included.
+11. SRT handling requires reading actual text, not only timestamps.
+12. PRD includes executable Scene, Shot, visual asset, Motion, subtitle, prompt, and risk sections.
