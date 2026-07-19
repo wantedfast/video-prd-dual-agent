@@ -25,7 +25,7 @@ Invoking this skill counts as an explicit user request for role-bounded sub-agen
 Before generating any PRD content, the main agent must:
 
 1. Load this `SKILL.md` and the required reference checklist.
-2. Read `references/video-prd-checklist.md` and `references/video-visual-constraints.md`.
+2. Read `references/video-prd-checklist.md`, `references/video-visual-constraints.md`, `references/video-prd-structured-workflow.md`, and `references/video-prd-output-spec.md`.
 3. Read all user-provided text materials completely, including SRT files.
 4. Inspect all user-provided local images, screenshots, charts, and media that are relevant to the PRD.
 5. Dispatch visible sub-agents for all mandatory roles:
@@ -38,10 +38,12 @@ Before generating any PRD content, the main agent must:
    - Text Agent
    - PRD Reviewer
 6. Run Agent A and Agent B as an explicit proposal-review-reconciliation loop before downstream planning.
-7. Collect one concrete artifact from each role.
-8. Assemble PRD v1 only after role artifacts are returned.
-9. Send PRD v1 to PRD Reviewer.
-10. If PRD Reviewer returns `NOT OK`, route mandatory fixes back to the owning role or fix them locally when the ownership is purely integrative, then repeat reviewer validation until `OK` or until the blocker is explicit.
+7. Create `video-prd.project.json` from `assets/video-prd-project.template.json`, then make it the only editable source of truth for Scene, Shot, subtitle, asset, Motion, sound-effect, fact, and render data.
+8. Collect one concrete artifact from each role and merge it into the canonical JSON after each dependency wave. Agents return structured fields or patches; they do not maintain separate Markdown truth.
+9. Run the deterministic pre-review gate with `scripts/video_prd_pipeline.py validate`. Fix every error before review. Treat warnings as explicit decisions, or use `--strict` to block them.
+10. Generate PRD v1 with `scripts/video_prd_pipeline.py build`. Do not hand-edit the generated Markdown.
+11. Send the canonical JSON, validation report, and generated PRD v1 to PRD Reviewer.
+12. If PRD Reviewer returns `NOT OK`, route mandatory fixes back to the owning role or fix them locally when ownership is purely integrative, update the JSON, rerun validation and build, then repeat reviewer validation until `OK` or until the blocker is explicit.
 
 If visible sub-agent capability is unavailable, do not silently degrade into single-agent simulation. Return exactly:
 
@@ -50,6 +52,40 @@ If visible sub-agent capability is unavailable, do not silently degrade into sin
 If any mandatory role cannot be dispatched or fails to return a concrete artifact, do not continue as if the role succeeded. Return exactly:
 
 `Blocked: mandatory role artifact unavailable: <role-name>. This skill forbids completing the PRD without all required role artifacts.`
+
+## Canonical Data And Parallel Scheduling
+
+Read `references/video-prd-structured-workflow.md` before dispatch. Its data ownership and dependency graph are mandatory.
+
+The Controller owns these four artifacts:
+
+- `video-prd.project.json`: canonical editable data
+- original SRT and source assets: immutable evidence
+- `video-prd.validation.json`: automated gate evidence
+- `video-prd.md`: generated Markdown delivery
+
+Run work in dependency waves:
+
+1. Material intake and `sync-srt`.
+2. Agent A proposal -> Agent B review -> Agent A reconciliation.
+3. Scene Planner -> Scene Director Shot skeleton.
+4. In parallel: Visual Asset Agent, Text Agent, and Controller fact registration.
+5. Motion Agent after visual object and asset IDs are stable; Motion Agent also owns crisp sound-effect cues and their exact Shot-relative timing.
+6. Structured merge -> automated validation -> Markdown build -> PRD Reviewer.
+
+Do not serialize independent work merely for convenience. Do not start dependent work from unstable IDs. The Controller must merge by stable IDs (`scene_id`, `shot_id`, `asset_id`, `fact_id`, `srt_id`) and reject orphan references.
+
+The automated validator runs before PRD Reviewer and must cover:
+
+- exact SRT cue ID, timing, and text consistency
+- continuous Shot timing with no gap or overlap
+- exactly-once SRT coverage by Shots
+- required fields, unique IDs, and valid cross-references
+- existence of every source-asset path
+- banned terms and required disclaimers
+- canonical numeric facts, required context, and unregistered-number warnings
+
+Automation is a deterministic gate, not a substitute for the Reviewer. PRD Reviewer still judges narrative logic, visual feasibility, pacing, hierarchy, compliance nuance, and overall production quality.
 
 ## Execution Evidence
 
@@ -108,6 +144,7 @@ Output artifact:
 
 - decision memo covering objective, audience, platform, ratio, duration, style, opening hook, narrative structure, chart/data strategy, and risk boundary
 - concrete questions for Agent B to agree with, modify, or reject
+- structured `meta` and `decisions` patch keyed to the canonical JSON
 
 ### Agent B: Co-Designer
 
@@ -122,6 +159,7 @@ Output artifact:
 - for each decision: `agreed`, `modified`, or `disagreed`
 - executable alternative when modifying or disagreeing
 - list of decisions that must be reflected in the final PRD
+- structured decision amendments keyed by decision item; do not rewrite unrelated fields
 
 Collaboration rule:
 
@@ -141,6 +179,7 @@ Output artifact:
 
 - Scene overview table
 - per-Scene time range, narration segment, narrative purpose, core message, recommended visual type, source material, emotional rhythm
+- canonical `scenes[]` records with stable Scene IDs and source asset IDs
 
 Scene rules:
 
@@ -160,6 +199,7 @@ Output artifact:
 
 - Shot-by-Shot storyboard table
 - per-Shot time range, narration, visual content, subject elements, background elements, camera movement, transition, required assets, HyperFrame-oriented prompt, notes
+- canonical `shots[]` skeleton with stable Shot IDs and exact `srt_ids`; leave owned arrays present even when another role fills them later
 
 Shot rules:
 
@@ -186,6 +226,7 @@ Output artifact:
 - prompt set: image-generation or design prompts plus negative prompts
 - motion/risk notes: how Motion Agent should animate each asset and what factual risks to avoid
 - generation mode: `planned_only` by default; use `generate_assets` only when the user explicitly requests actual image files
+- canonical `assets[]` records and Shot `asset_ids` patches; every source asset path must be exact and verifiable
 
 Visual asset rules:
 
@@ -207,6 +248,7 @@ Output artifact:
 
 - Motion timeline table
 - per-Shot animation timing, objects, actions, animation style, duration, intensity, and purpose
+- per-Shot `motion[]` and `sfx[]` patches with Shot-relative `at_ms`; every sound cue includes name, sonic character, and narrative purpose
 
 Motion rules:
 
@@ -214,6 +256,7 @@ Motion rules:
 - Important numbers may enlarge, outline, glow, or sweep-light, but avoid empty spectacle.
 - Chart content should reveal progressively rather than appearing all at once.
 - Motion must serve information clarity.
+- Default interface/data cues should be crisp, short, clean, and restrained: glass tick, soft click, light chime, or precise whoosh. Avoid muddy impacts and generic trailer booms unless the brief explicitly calls for them.
 
 ### Text Agent
 
@@ -230,6 +273,7 @@ Output artifact:
 - highlighted words and number rules
 - banned-word check
 - final risk wording
+- canonical Shot `screen_text` patches plus `rules.banned_terms`, `rules.required_disclaimers`, subtitle rules, and keyword highlights
 
 Text rules:
 
@@ -244,6 +288,8 @@ Text rules:
 Input:
 
 - PRD v1 assembled by the Controller / Integrator
+- canonical `video-prd.project.json`
+- `video-prd.validation.json` with zero unresolved errors
 - all role artifacts
 - source material summary
 
@@ -317,6 +363,8 @@ If the user provides SRT:
 
 - read SRT bytes with encoding detection when needed
 - preserve timestamps
+- run `python scripts/video_prd_pipeline.py sync-srt <project.json>`; do not manually retype the canonical `subtitles` array
+- never edit synced subtitle ID, timing, or text to make the storyboard fit; change Shot boundaries and mappings instead
 - align Scene and Shot timing with SRT as much as possible
 - use SRT text as narration ground truth unless the user provides a newer script
 - do not omit important narration information
@@ -335,7 +383,7 @@ Record any assumption in the internal decision summary.
 
 ## PRD Output Structure
 
-Use Chinese. Prefer concise but complete Markdown.
+Use Chinese. Prefer concise but complete Markdown. The following structure is rendered from `video-prd.project.json` by `scripts/video_prd_pipeline.py build`; never maintain it separately by hand.
 
 ```markdown
 # AI 视频生成 PRD
@@ -375,141 +423,7 @@ Use Chinese. Prefer concise but complete Markdown.
 ## 15. 生成后检查清单
 ```
 
-## Section Requirements
-
-### 0. 多 Agent 执行摘要
-
-Include:
-
-- selected agents
-- one-line artifact returned by each agent
-- PRD Reviewer verdict
-- major assumptions
-
-Do not include long transcripts or hidden reasoning.
-
-### 1. 项目目标
-
-Explain:
-
-- what problem the video solves
-- what the audience should understand
-- what the audience should remember
-- what the distribution goal is
-
-### 2. 输入素材分析
-
-Organize:
-
-- SRT / narration script
-- screenshots
-- charts
-- product materials
-- brand materials
-- statistics
-- other assets
-
-Analyze how each material should be used. If a material type is not provided, write `未提供`; do not invent it.
-
-### 3. 需求决策总表
-
-Use:
-
-| 决策项 | 最终决策 | 来源 Agent / 工件 | 理由 | 风险/备注 |
-| --- | --- | --- | --- | --- |
-
-Include platform, aspect ratio, duration, style, opening hook, narrative structure, subtitle rules, chart usage, animation intensity, risk reminder, and AI generation method.
-
-### 5. Scene 总览
-
-Use:
-
-| Scene | 时间范围 | 叙事功能 | 核心信息 | 推荐画面 |
-| --- | --- | --- | --- | --- |
-
-Opening hook must be listed separately.
-
-### 7. Shot-by-Shot 分镜 PRD
-
-Use:
-
-| Shot | 时间范围 | 对应口播 | 画面内容 | 主体元素 | 背景元素 | 镜头运动 | 转场 | 所需素材 | AI 视频生成 Prompt | 备注 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-
-Each Shot must include a HyperFrame-oriented prompt.
-
-### 7A. 视觉包装素材 PRD
-
-Use:
-
-| Asset ID | 素材类型 | 来源类型 | 叙事目的 | 使用 Scene/Shot | Usage Map | Prompt | Negative Prompt | approved_for_generation | 风险备注 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-
-Rules:
-
-- This section is mandatory when the video is a restaurant, food, place, travel, or visit VLOG, or when the user asks for packaging assets.
-- `approved_for_generation` means the asset is safe to generate if the user later requests `generation_mode=generate_assets`; it does not trigger image generation by itself.
-- Use `planned_only` as the default generation mode.
-- Include nonfactual symbolic packaging when useful, but do not create assets that look like factual footage.
-
-### 8. Motion 动画时间轴
-
-Use:
-
-| Scene | Shot | 时间点 | 对象 | 动作 | 动画方式 | 持续时间 | 强度 | 目的 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-
-Every Motion row must link to a specific Scene and Shot.
-
-### 9. 字幕与关键词高亮规则
-
-Include:
-
-- subtitle position
-- subtitle font size
-- max characters per screen
-- highlighted keywords
-- highlight style
-- large on-screen text rules
-- risk reminder rules
-- forbidden words
-
-If SRT exists, output:
-
-| 时间范围 | 字幕 | 屏幕大字 | 高亮词 | 样式 |
-| --- | --- | --- | --- | --- |
-
-### 12. AI 视频生成总提示词
-
-Output one global HyperFrame prompt that can be directly used by the HyperFrame / HyperFrames video generation workflow.
-
-Must include:
-
-- video style
-- global visual constraints from `references/video-visual-constraints.md`, unless overridden by user-provided brand or reference visuals
-- aspect ratio
-- camera language
-- motion style
-- subtitle style
-- chart / screenshot display style
-- pacing
-- risk wording requirements
-- instruction not to fabricate data
-- instruction to follow the Scene, Shot, and Motion timeline exactly
-
-### 14. 风险与合规检查
-
-If finance content is involved, this section is mandatory and must include:
-
-- whether it involves investment advice
-- whether it involves individual stocks / funds / ETFs
-- whether it includes return-promise risk
-- whether it includes exaggerated language
-- whether data source is unclear
-- high-risk expressions that were replaced
-- final risk reminder wording
-
-If not finance content, keep the section and write the relevant non-finance risk check.
+For detailed per-section content requirements, read `references/video-prd-output-spec.md`. The JSON schema and generator define table shape; the output specification defines semantic completeness.
 
 ## Completion Checklist For Skill Edits
 
@@ -527,3 +441,7 @@ When editing this skill, verify:
 10. Finance risk-control rules are included.
 11. SRT handling requires reading actual text, not only timestamps.
 12. PRD includes executable Scene, Shot, visual asset, Motion, subtitle, prompt, and risk sections.
+13. `video-prd.project.json` is the only editable source of truth and generated Markdown is not hand-edited.
+14. Automated validation runs before PRD Reviewer and blocks SRT, timing, reference, path, banned-term, disclaimer, and numeric-fact errors.
+15. Independent roles run in parallel dependency waves, while Motion waits for stable visual object and asset IDs.
+16. Motion Agent specifies Shot-relative crisp sound effects with character, timing, and narrative purpose.

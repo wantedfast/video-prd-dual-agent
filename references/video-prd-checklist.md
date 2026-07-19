@@ -35,11 +35,23 @@ The Controller / Integrator must collect these artifacts before writing PRD v1.
 | Agent B | Co-design review memo | agreed / modified / disagreed decisions, executable alternatives, final decisions to reflect |
 | Scene Planner | Scene overview | time ranges, narration mapping, narrative function, core message, recommended visuals, source material |
 | Scene Director | Shot storyboard | per-Shot visuals, assets, camera movement, transition, HyperFrame prompt, notes |
-| Motion Agent | Motion timeline | per-Shot timing, object, action, animation style, duration, intensity, purpose |
+| Visual Asset Agent | Asset plan | stable asset IDs, source/generated status, exact source path, purpose, usage map, processing/generation brief |
+| Motion Agent | Motion + SFX timeline | per-Shot timing, object, action, animation style, duration, intensity, purpose; crisp sound cue, character, and timing |
 | Text Agent | Subtitle and keyword plan | subtitle rules, screen text, keyword highlights, banned words, risk wording |
 | PRD Reviewer | Review verdict | `OK` or `NOT OK`; if `NOT OK`, mandatory fixes with section references |
 
 If any artifact is missing, the Controller must stop with the mandatory-role blocked message from `SKILL.md`.
+
+## Structured Source And Automated Gate
+
+- Copy `assets/video-prd-project.template.json` and maintain one `video-prd.project.json` as the only editable source of truth.
+- Use stable Scene, Shot, SRT, asset, and fact IDs. Merge role output by ID; never paste parallel tables into separate truth sources.
+- Run `sync-srt` before planning. Synced cue ID, timing, and text are immutable.
+- Run `validate` after the structured merge and before Reviewer. Resolve every error.
+- Run `build` to generate Markdown. Never hand-edit generated Markdown; change JSON and rebuild.
+- Give Reviewer the canonical JSON, validation report, generated Markdown, and role artifacts.
+
+The automated gate must cover SRT exactness and exactly-once coverage, continuous Shot timing, Scene containment, required fields, unique IDs, references, source-asset paths, banned terms, disclaimers, canonical facts, fact context, and unregistered-number warnings.
 
 ## Decision Coverage Checklist
 
@@ -85,6 +97,8 @@ The A/B decision loop must settle:
 - Transitions are specified with timing and style.
 - Motion serves comprehension, not empty spectacle.
 - Repeated animation patterns are avoided unless consistency is intentional.
+- Sound effects are mapped to exact Shot-relative timing and have a stated narrative purpose.
+- Default UI/data sound cues are crisp, short, and restrained; avoid muddy impacts and indiscriminate trailer booms.
 
 ## Text And Subtitle Checklist
 
@@ -143,6 +157,7 @@ The final PRD must include:
 - `5. Scene 总览`
 - `6. Scene-by-Scene 结构`
 - `7. Shot-by-Shot 分镜 PRD`
+- `7A. 视觉包装素材 PRD`
 - `8. Motion 动画时间轴`
 - `9. 字幕与关键词高亮规则`
 - `10. 视觉语言`
@@ -157,4 +172,5 @@ The final response must include execution evidence:
 - Selected agents
 - One-line artifact returned by each agent
 - PRD Reviewer verdict
+- Automated validation status and report path
 - Final PRD file path when created

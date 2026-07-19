@@ -1,4 +1,4 @@
 interface:
   display_name: "Video PRD Dual Agent"
-  short_description: "Mandatory real multi-agent controller for HyperFrame / HyperFrames video PRDs."
-  default_prompt: "Use $video-prd-dual-agent to dispatch real role-bounded agents, collect their artifacts, and produce an evidence-backed HyperFrame / HyperFrames video PRD."
+  short_description: "Structured multi-agent PRDs with automated preflight"
+  default_prompt: "Use $video-prd-dual-agent to coordinate role-bounded agents, validate one structured source of truth, and generate a HyperFrame-ready video PRD."
